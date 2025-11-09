@@ -274,6 +274,47 @@ router.post('/:routeId/optimize', async (req, res) => {
     }
 });
 
+/**
+ * @route   GET /api/routes/:routeId
+ * @desc    Lấy chi tiết một lộ trình (bao gồm các stops đã sắp xếp)
+ * @access  Private
+ */
+router.get('/:routeId', async (req, res) => {
+    const { routeId } = req.params;
+    const userId = req.user.id;
+
+    try {
+        // 1. Lấy thông tin chính của route VÀ kiểm tra quyền sở hữu
+        const [routeRows] = await pool.query(
+            'SELECT * FROM routes WHERE id = ? AND user_id = ?',
+            [routeId, userId]
+        );
+
+        if (routeRows.length === 0) {
+            return res.status(404).json({ error: 'Không tìm thấy lộ trình hoặc bạn không có quyền.' });
+        }
+
+        const route = routeRows[0];
+
+        // 2. Lấy tất cả các điểm dừng (stops) thuộc về route này
+        // QUAN TRỌNG: Sắp xếp (ORDER BY) theo optimized_order
+        const [stops] = await pool.query(
+            'SELECT id, address_text, lat, lng, optimized_order, stop_status FROM stops WHERE route_id = ? ORDER BY optimized_order ASC',
+            [routeId]
+        );
+
+        // 3. Gắn mảng stops vào kết quả
+        route.stops = stops;
+
+        // 4. Trả về kết quả
+        res.json(route);
+
+    } catch (error) {
+        console.error('Lỗi khi lấy chi tiết route:', error.message);
+        res.status(500).json({ error: 'Lỗi server nội bộ' });
+    }
+});
+
 // Gắn 'stopsRouter' vào đây
 router.use('/:routeId/stops', stopsRouter);
 

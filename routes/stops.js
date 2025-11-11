@@ -96,5 +96,55 @@ router.delete('/:stopId', async (req, res) => {
     }
 });
 
+/**
+ * @route   PATCH /api/routes/:routeId/stops/:stopId
+ * @desc    Cập nhật trạng thái một điểm dừng (pending, delivered, failed)
+ * @access  Private
+ */
+router.patch('/:stopId', async (req, res) => {
+    const { routeId, stopId } = req.params;
+    const userId = req.user.id;
+
+    // 1. Lấy trạng thái mới từ body
+    const { status } = req.body;
+
+    // 2. (Quan trọng) Kiểm tra xem trạng thái gửi lên có hợp lệ không
+    const validStatuses = ['pending', 'delivered', 'failed'];
+    if (!status || !validStatuses.includes(status)) {
+        return res.status(400).json({
+            error: 'Trạng thái (status) không hợp lệ.',
+            message: 'Chỉ chấp nhận: pending, delivered, failed'
+        });
+    }
+
+    try {
+        // 3. (Bảo mật) Kiểm tra quyền sở hữu route
+        const isOwner = await checkRouteOwnership(routeId, userId);
+        if (!isOwner) {
+            return res.status(403).json({ error: 'Forbidden. Bạn không có quyền truy cập lộ trình này.' });
+        }
+
+        // 4. Cập nhật CSDL
+        const sql = 'UPDATE stops SET stop_status = ? WHERE id = ? AND route_id = ?';
+        const [result] = await pool.query(sql, [status, stopId, routeId]);
+
+        // 5. Kiểm tra xem có update được không
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Không tìm thấy điểm dừng.' });
+        }
+
+        // 6. Trả về thành công
+        res.json({
+            message: 'Cập nhật trạng thái điểm dừng thành công!',
+            stopId: stopId,
+            newStatus: status
+        });
+
+    } catch (error) {
+        console.error('Lỗi khi cập nhật stop status:', error);
+        res.status(500).json({ error: 'Lỗi server nội bộ' });
+    }
+});
+
 
 module.exports = router;

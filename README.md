@@ -14,7 +14,7 @@
 
 1.  **Clone repository:**
     ```bash
-    git clone [https://github.com/Dinhthuy2k5/Shipper-Route.git](https://github.com/Dinhthuy2k5/Shipper-Route.git)
+    git clone https://github.com/Dinhthuy2k5/Shipper-Route.git
     cd Shipper-Route
     ```
 

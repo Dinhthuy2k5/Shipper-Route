@@ -30,6 +30,7 @@ router.post('/register', async (req, res) => {
 
         const [result] = await pool.query(sql, values);
 
+        console.log('Đăng ký shipper thành công!');
         res.status(201).json({
             message: 'Đăng ký shipper thành công!',
             userId: result.insertId
@@ -98,6 +99,7 @@ router.post('/login', async (req, res) => {
             process.env.JWT_SECRET, // Lấy mã bí mật từ .env
             { expiresIn: '7d' }
         );
+        console.log('Đăng nhập thành công!');
 
         // 7. Trả token về cho client
         res.json({

@@ -54,7 +54,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-// --- API MỚI: THÊM/CẬP NHẬT ĐIỂM XUẤT PHÁT ---
+// API MỚI: THÊM/CẬP NHẬT ĐIỂM XUẤT PHÁT ---
 /**
  * @route   PUT /api/routes/:routeId/start-point
  * @desc    Thêm hoặc cập nhật điểm xuất phát cho lộ trình
@@ -311,6 +311,28 @@ router.get('/:routeId', async (req, res) => {
 
     } catch (error) {
         console.error('Lỗi khi lấy chi tiết route:', error.message);
+        res.status(500).json({ error: 'Lỗi server nội bộ' });
+    }
+});
+
+// API: LẤY TẤT CẢ LỘ TRÌNH (LỊCH SỬ)
+/**
+ * @route   GET /api/routes
+ * @desc    Lấy tất cả lộ trình của shipper (đã đăng nhập)
+ * @access  Private
+ */
+router.get('/', async (req, res) => {
+    const userId = req.user.id; // Lấy từ authMiddleware
+
+    try {
+        // Sắp xếp theo ngày tạo mới nhất (DESC)
+        const sql = 'SELECT * FROM routes WHERE user_id = ? ORDER BY created_at DESC';
+        const [routes] = await pool.query(sql, [userId]);
+
+        res.json(routes); // Trả về một mảng các lộ trình
+
+    } catch (error) {
+        console.error('Lỗi khi lấy lịch sử lộ trình:', error);
         res.status(500).json({ error: 'Lỗi server nội bộ' });
     }
 });

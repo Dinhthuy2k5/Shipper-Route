@@ -337,6 +337,42 @@ router.get('/', async (req, res) => {
     }
 });
 
+// --- API MỚI: CẬP NHẬT TRẠNG THÁI LỘ TRÌNH ---
+/**
+ * @route   PATCH /api/routes/:routeId/status
+ * @desc    Cập nhật trạng thái của lộ trình (pending, in_progress, completed)
+ * @access  Private
+ */
+router.patch('/:routeId/status', async (req, res) => {
+    const { routeId } = req.params;
+    const userId = req.user.id;
+    const { status } = req.body; // Nhận status mới từ body
+
+    // Kiểm tra status hợp lệ
+    const validStatuses = ['pending', 'in_progress', 'completed'];
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Trạng thái không hợp lệ.' });
+    }
+
+    try {
+        // Kiểm tra quyền sở hữu
+        const isOwner = await checkRouteOwnership(routeId, userId);
+        if (!isOwner) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        // Cập nhật CSDL
+        const sql = 'UPDATE routes SET route_status = ? WHERE id = ?';
+        await pool.query(sql, [status, routeId]);
+
+        res.json({ message: 'Cập nhật trạng thái lộ trình thành công!', newStatus: status });
+
+    } catch (error) {
+        console.error('Lỗi khi cập nhật trạng thái route:', error);
+        res.status(500).json({ error: 'Lỗi server nội bộ' });
+    }
+});
+
 // Gắn 'stopsRouter' vào đây
 router.use('/:routeId/stops', stopsRouter);
 

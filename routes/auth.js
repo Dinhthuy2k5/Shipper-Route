@@ -5,6 +5,8 @@ const router = express.Router(); // 1. Khởi tạo Router của Express
 const pool = require('../config/db'); // 2. Import pool (lưu ý đường dẫn ../)
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); // 1. Import 'jsonwebtoken'
+// Import middleware xác thực (Nếu bạn chưa có, hãy đảm bảo check token ở đây)
+const authMiddleware = require('../middleware/authMiddleware');
 
 /**
  * @route   POST /api/auth/register
@@ -16,7 +18,8 @@ const jwt = require('jsonwebtoken'); // 1. Import 'jsonwebtoken'
 // API đăng kí
 router.post('/register', async (req, res) => {
     try {
-        const { email, password, fullName } = req.body;
+        // 1. Nhận thêm phone và vehicle từ body
+        const { email, password, fullName, phone, vehicle } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({ error: 'Email và Password là bắt buộc' });
@@ -25,12 +28,12 @@ router.post('/register', async (req, res) => {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        const sql = 'INSERT INTO users (email, password_hash, full_name) VALUES (?, ?, ?)';
-        const values = [email, hashedPassword, fullName];
+        // 2. Cập nhật câu lệnh SQL INSERT
+        const sql = 'INSERT INTO users (email, password_hash, full_name, phone, vehicle) VALUES (?, ?, ?, ?, ?)';
+        const values = [email, hashedPassword, fullName, phone, vehicle];
 
         const [result] = await pool.query(sql, values);
 
-        console.log('Đăng ký shipper thành công!');
         res.status(201).json({
             message: 'Đăng ký shipper thành công!',
             userId: result.insertId
@@ -110,6 +113,41 @@ router.post('/login', async (req, res) => {
     } catch (error) {
         console.error('Lỗi khi đăng nhập:', error);
         res.status(500).json({ error: 'Lỗi server nội bộ' });
+    }
+});
+
+// API: Lấy thông tin cá nhân
+router.get('/profile', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id; // Lấy từ token sau khi qua middleware
+
+        const sql = 'SELECT id, email, full_name, phone, vehicle FROM users WHERE id = ?';
+        const [rows] = await pool.query(sql, [userId]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Không tìm thấy người dùng' });
+        }
+
+        res.json(rows[0]);
+    } catch (error) {
+        console.error('Lỗi lấy profile:', error);
+        res.status(500).json({ error: 'Lỗi server' });
+    }
+});
+
+// API: Cập nhật thông tin cá nhân
+router.put('/profile', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { fullName, phone, vehicle } = req.body;
+
+        const sql = 'UPDATE users SET full_name = ?, phone = ?, vehicle = ? WHERE id = ?';
+        await pool.query(sql, [fullName, phone, vehicle, userId]);
+
+        res.json({ message: 'Cập nhật thông tin thành công!' });
+    } catch (error) {
+        console.error('Lỗi cập nhật profile:', error);
+        res.status(500).json({ error: 'Lỗi server' });
     }
 });
 

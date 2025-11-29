@@ -3,6 +3,7 @@
 const express = require('express');
 const app = express();
 const port = 3000;
+const statsRouter = require('./routes/stats');
 
 // Import pool (vẫn giữ ở đây để check kết nối)
 const pool = require('./config/db');
@@ -21,7 +22,7 @@ app.use(express.json()); // Middleware để đọc JSON body
 // Bất kỳ request nào tới '/api/auth' sẽ được chuyển cho authRoutes xử lý
 // Các route '/api/auth' (đăng ký, đăng nhập) thì KHÔNG cần bảo vệ
 app.use('/api/auth', authRoutes);
-
+app.use('/api/stats', statsRouter);
 // Các route '/api/routes' (tạo route, thêm stop) thì BẮT BUỘC bảo vệ
 // Bất kỳ API nào trong 'routeRoutes' sẽ phải đi qua 'authMiddleware' trước
 app.use('/api/routes', authMiddleware, routeRoutes);

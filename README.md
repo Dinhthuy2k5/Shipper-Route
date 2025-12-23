@@ -103,6 +103,17 @@ CREATE TABLE stops (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (route_id) REFERENCES routes(id) ON DELETE CASCADE
 );
+
+-- Bảng Đánh giá
+CREATE TABLE reviews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    route_id INT NOT NULL,           -- Đánh giá cho lộ trình nào
+    customer_name VARCHAR(255),      -- Tên khách hàng (hoặc để ẩn danh)
+    rating INT DEFAULT 5,            -- Số sao (1-5)
+    comment TEXT,                    -- Nhận xét
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (route_id) REFERENCES routes(id) ON DELETE CASCADE
+);
 ```
 
 ## 🗺️ API Endpoints
@@ -128,6 +139,9 @@ CREATE TABLE stops (
 * `DELETE` **/api/routes/:routeId/stops/:stopId**: Xóa một điểm dừng.
 * `PATCH` **/api/routes/:routeId/stops/:stopId**: Cập nhật trạng thái của điểm dừng (VD: `delivered` - Đã giao, `failed` - Thất bại).
 
+### 4. Stats (Thống kê)
+* `GET` **/api/stats/summary**: Lấy thống kê tổng quan hoạt động của Shipper (Ngày hoạt động, số đơn hoàn thành, tổng quãng đường, đánh giá trung bình...).
+
 ## 📂 Cấu trúc Thư mục (Folder Structure)
 
 ```text
@@ -142,6 +156,7 @@ shipper-api/
 │   ├── auth.js             # API: Đăng ký, Đăng nhập, Profile
 │   ├── routes.js           # API: Tạo lộ trình, Tối ưu hóa, Cập nhật trạng thái
 │   └── stops.js            # API: Thêm/Xóa/Sửa điểm dừng
+│   └── stats.js            # API: Thống kê hoạt động 
 │
 ├── .env                    # Biến môi trường (Database, JWT Secret, Mapbox Token)
 ├── .gitignore              # Danh sách file bị bỏ qua bởi Git

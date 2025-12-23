@@ -5,7 +5,7 @@ const router = express.Router(); // 1. Khởi tạo Router của Express
 const pool = require('../config/db'); // 2. Import pool (lưu ý đường dẫn ../)
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); // 1. Import 'jsonwebtoken'
-// Import middleware xác thực (Nếu bạn chưa có, hãy đảm bảo check token ở đây)
+
 const authMiddleware = require('../middleware/authMiddleware');
 
 /**

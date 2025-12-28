@@ -61,40 +61,50 @@ router.post('/', async (req, res) => {
  */
 router.get('/search', async (req, res) => {
     try {
-        const { q } = req.query; // Lấy từ khóa tìm kiếm từ ?q=...
+        const { q, userLat, userLng } = req.query;
 
-        if (!q) {
-            return res.status(400).json({ error: 'Thiếu từ khóa tìm kiếm' });
+        // --- THÊM LOG ĐỂ KIỂM TRA ---
+        console.log("--------------------");
+        console.log("🔍 Đang tìm kiếm:", q);
+        console.log("📍 Tọa độ nhận được:", userLat, userLng);
+
+        const params = {
+            access_token: process.env.MAPBOX_ACCESS_TOKEN,
+            country: 'vn',
+            autocomplete: true,
+            limit: 5,
+            language: 'vi',
+            // Thêm dòng này để ưu tiên tìm Địa điểm (poi) và Địa chỉ (address)
+            types: 'poi,address'
+        };
+
+        if (userLat && userLng) {
+            params.proximity = `${userLng},${userLat}`; // Chú ý: Lng trước, Lat sau
+            console.log("🎯 Chế độ Proximity:", params.proximity);
         }
 
-        // Gọi sang Mapbox Geocoding API
-        // country=vn: Chỉ tìm ở Việt Nam
-        // autocomplete=true: Chế độ gợi ý
-        // limit=5: Lấy 5 kết quả
         const mapboxUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json`;
 
-        const response = await axios.get(mapboxUrl, {
-            params: {
-                access_token: process.env.MAPBOX_ACCESS_TOKEN,
-                country: 'vn',
-                autocomplete: true,
-                limit: 5,
-                language: 'vi' // Ưu tiên tiếng Việt
-            }
-        });
+        // Log URL cuối cùng (để bạn có thể copy paste vào trình duyệt xem thử)
+        console.log("🔗 URL gọi Mapbox:", mapboxUrl);
+        console.log("⚙️ Params:", params);
+        // -----------------------------
 
-        // Trả về danh sách rút gọn cho Frontend dễ dùng
+        const response = await axios.get(mapboxUrl, { params });
+
+        // Log kết quả trả về từ Mapbox
+        console.log("✅ Kết quả tìm thấy:", response.data.features.length);
+
         const suggestions = response.data.features.map(item => ({
             id: item.id,
-            name: item.place_name, // Tên đầy đủ
-            center: item.center    // [lng, lat]
+            name: item.place_name,
+            center: item.center
         }));
 
         res.json(suggestions);
-
     } catch (error) {
-        console.error('Lỗi tìm kiếm Mapbox:', error.message);
-        res.status(500).json({ error: 'Lỗi server khi tìm kiếm' });
+        console.error('❌ Lỗi:', error.message);
+        res.status(500).json({ error: 'Lỗi server' });
     }
 });
 

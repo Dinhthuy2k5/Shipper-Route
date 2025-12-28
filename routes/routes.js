@@ -54,6 +54,50 @@ router.post('/', async (req, res) => {
     }
 });
 
+/**
+ * @route   GET /api/routes/search
+ * @desc    Tìm kiếm địa điểm (Autocomplete) qua Mapbox
+ * @access  Private (Cần Token) hoặc Public tùy bạn
+ */
+router.get('/search', async (req, res) => {
+    try {
+        const { q } = req.query; // Lấy từ khóa tìm kiếm từ ?q=...
+
+        if (!q) {
+            return res.status(400).json({ error: 'Thiếu từ khóa tìm kiếm' });
+        }
+
+        // Gọi sang Mapbox Geocoding API
+        // country=vn: Chỉ tìm ở Việt Nam
+        // autocomplete=true: Chế độ gợi ý
+        // limit=5: Lấy 5 kết quả
+        const mapboxUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json`;
+
+        const response = await axios.get(mapboxUrl, {
+            params: {
+                access_token: process.env.MAPBOX_ACCESS_TOKEN,
+                country: 'vn',
+                autocomplete: true,
+                limit: 5,
+                language: 'vi' // Ưu tiên tiếng Việt
+            }
+        });
+
+        // Trả về danh sách rút gọn cho Frontend dễ dùng
+        const suggestions = response.data.features.map(item => ({
+            id: item.id,
+            name: item.place_name, // Tên đầy đủ
+            center: item.center    // [lng, lat]
+        }));
+
+        res.json(suggestions);
+
+    } catch (error) {
+        console.error('Lỗi tìm kiếm Mapbox:', error.message);
+        res.status(500).json({ error: 'Lỗi server khi tìm kiếm' });
+    }
+});
+
 // API MỚI: THÊM/CẬP NHẬT ĐIỂM XUẤT PHÁT ---
 /**
  * @route   PUT /api/routes/:routeId/start-point
@@ -372,6 +416,8 @@ router.patch('/:routeId/status', async (req, res) => {
         res.status(500).json({ error: 'Lỗi server nội bộ' });
     }
 });
+
+
 
 // Gắn 'stopsRouter' vào đây
 router.use('/:routeId/stops', stopsRouter);

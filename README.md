@@ -14,7 +14,7 @@
 
 1.  **Clone repository:**
     ```bash
-    git clone [https://github.com/Dinhthuy2k5/Shipper-Route.git](https://github.com/Dinhthuy2k5/Shipper-Route.git)
+    git clone https://github.com/Dinhthuy2k5/Shipper-Route.git
     cd Shipper-Route
     ```
 
@@ -121,7 +121,7 @@ CREATE TABLE reviews (
 > **Lưu ý:** Tất cả các API (ngoại trừ nhóm **Auth**) đều yêu cầu `Bearer Token` trong header `Authorization`.
 
 ### 1. Authentication (Xác thực)
-* `POST` **/api/auth/register**: Đăng ký tài khoản mới (Yêu cầu: Email, Password, Tên, SĐT, Xe).
+* `POST` **/api/auth/register**: Đăng ký tài khoản mới (Yêu cầu: Email, Password, Tên, SĐT, Phương tiện).
 * `POST` **/api/auth/login**: Đăng nhập và nhận JWT Token.
 * `GET` **/api/auth/profile**: Lấy thông tin cá nhân của shipper.
 * `PUT` **/api/auth/profile**: Cập nhật thông tin cá nhân.
@@ -133,6 +133,7 @@ CREATE TABLE reviews (
 * `PUT` **/api/routes/:routeId/start-point**: Cập nhật điểm xuất phát cho lộ trình.
 * `PATCH` **/api/routes/:routeId/status**: Cập nhật trạng thái lộ trình (VD: `completed` - Hoàn thành).
 * `POST` **/api/routes/:routeId/optimize**: **(Quan trọng)** Gửi yêu cầu tới Mapbox để tối ưu hóa thứ tự các điểm dừng.
+* `GET` **/api/routes/search**: **(Quan trọng)** Gọi Mapbox Geocoding API để gợi ý địa điểm, ưu tiên gần điểm xuất phát(proximity).
 
 ### 3. Stops (Quản lý Điểm dừng)
 * `POST` **/api/routes/:routeId/stops**: Thêm một điểm dừng mới vào lộ trình.
